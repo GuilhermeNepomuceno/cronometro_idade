@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'CalculoIdade.dart';
+import 'tempoVida.dart';
 
 void main() {
   //runApp(MyApp());
@@ -133,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   thickness: 5.0,
                                   color: Colors.grey[200],
                                 ),
-                                Text('Min')
+                                Text('Min'),
                               ],
                               mainAxisAlignment: MainAxisAlignment.center,
                             ),
@@ -186,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> {
               RaisedButton(
                 onPressed: () {
                   Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => CalculoIdade()));
+                      MaterialPageRoute(builder: (context) => TempoDeVida()));
                 },
                 child: Icon(Icons.navigate_next),
               )
