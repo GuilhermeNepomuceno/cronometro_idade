@@ -1,3 +1,4 @@
+import 'package:cronometro/classes/individuo.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -7,23 +8,10 @@ class TempoDeVida extends StatefulWidget {
 }
 
 class _TempoDeVidaState extends State<TempoDeVida> {
-  final _controle = TextEditingController();
+  Individuo pessoa = Individuo();
+  final _controleData = TextEditingController();
+  final _controleHora = TextEditingController();
   DateTime _dataAtual = DateTime.now();
-  DateTime _dataPicker;
-  Duration _dataTxt;
-  Map<String, int> _idade = {
-    'anos': 0,
-    'meses': 0,
-    'dias': 0,
-    'horas': 0,
-    'minutos': 0,
-    'segundos': 0
-  };
-
-  void limpar() {
-    _controle.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,42 +30,127 @@ class _TempoDeVidaState extends State<TempoDeVida> {
                     mainAxisSize: MainAxisSize.min,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      TextFormField(
-                        //key: _inData,
-                        controller: _controle,
-                        readOnly: true,
-                        onTap: () => calendario(context),
-                        decoration:
-                            InputDecoration(labelText: 'Data de Nascimento'),
+                      Container(
+                        margin: EdgeInsets.only(bottom: 10),
+                        child: Column(
+                          children: [
+                            ListTile(
+                              leading: IconButton(
+                                  icon: Icon(Icons.calendar_today),
+                                  onPressed: () async {
+                                    pessoa.setDataNascimento =
+                                        await setDataNascimento(
+                                            context, pessoa.getDataNascimento);
+                                    _controleData.text =
+                                        formatData(pessoa.getDataNascimento);
+                                  }),
+                              title: TextFormField(
+                                //key: _inData,
+                                controller: _controleData,
+                                readOnly: true,
+                                onTap: () async {
+                                  pessoa.setDataNascimento =
+                                      await setDataNascimento(
+                                          context, pessoa.getDataNascimento);
+                                  _controleData.text =
+                                      formatData(pessoa.getDataNascimento);
+                                },
+                                decoration: InputDecoration(
+                                    labelText: 'Data de Nascimento'),
 
-                        //initialValue: 'teste',
+                                //initialValue: 'teste',
+                              ),
+                            ),
+                            ListTile(
+                              leading: IconButton(
+                                  icon: Icon(Icons.access_time),
+                                  onPressed: () async {
+                                    pessoa.setHoraNascimento =
+                                        await setHoraNascimento(
+                                            context, pessoa.getHoraNascimento);
+                                    _controleHora.text =
+                                        formatHora(pessoa.getHoraNascimento);
+                                  }),
+                              title: TextFormField(
+                                controller: _controleHora,
+                                readOnly: true,
+                                onTap: () async {
+                                  pessoa.setHoraNascimento =
+                                      await setHoraNascimento(
+                                          context, pessoa.getHoraNascimento);
+                                  _controleHora.text =
+                                      formatHora(pessoa.getHoraNascimento);
+                                },
+                                decoration:
+                                    InputDecoration(labelText: 'Horário'),
+
+                                //initialValue: 'teste',
+                              ),
+                            )
+                          ],
+                        ),
                       ),
                       Container(
-                        padding: EdgeInsets.only(top: 30, bottom: 15),
+                        margin: EdgeInsets.symmetric(vertical: 10),
+                        child: RaisedButton(
+                          onPressed: () {
+                            if ((pessoa.getDataNascimento != null) |
+                                (pessoa.getHoraNascimento != null)) {
+                              calcularSpanTempo(pessoa);
+                              setState(() {});
+                            } else {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text('Dados insuficientes'),
+                                  content: Text('Informar Data ou Horário'),
+                                  actions: [
+                                    FlatButton(
+                                        onPressed: () {},
+                                        child: Text('Entendido'))
+                                  ],
+                                ),
+                              );
+                            }
+                          },
+                          child: Text('Calcular Idade'),
+                        ),
+                      ),
+                      Container(
+                        padding: EdgeInsets.only(top: 15, bottom: 25),
                         child: Text(
                             'Data atual: ${DateFormat('d/M/y').format(_dataAtual)}'),
                       ),
-                      RaisedButton(
-                        onPressed: () => calendario(context),
-                        child: Text('Calendario'),
-                      ),
                       Container(
-                          //child: Text(_dataTxt),
-                          ),
-                      Container(
+                        padding: EdgeInsets.all(10),
                         child: Column(
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text('${_idade['anos'] ?? ''} Ano(s)'),
-                                Text('${_idade['meses'] ?? ''} Mês(es)'),
-                                Text('${_idade['dias'] ?? ''} Dia(s)'),
+                                Text(
+                                  'Idade:',
+                                  style: TextStyle(fontSize: 20),
+                                )
                               ],
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [Text('H:'), Text('M: '), Text('S: ')],
+                              children: [
+                                Text('${pessoa.getIdade.getAno ?? '0'} Ano(s)'),
+                                Text(
+                                    '${pessoa.getIdade.getMes ?? '0'} Mês(es)'),
+                                Text('${pessoa.getIdade.getDia ?? '0'} Dia(s)'),
+                              ],
+                            ),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                Text(
+                                    '${pessoa.getIdade.getHorasDeVida ?? '0'} Horas'),
+                                Text(
+                                    '${pessoa.getIdade.getMinutosDeVida ?? '0'} Minutos'),
+                              ],
                             ),
                           ],
                         ),
@@ -92,31 +165,63 @@ class _TempoDeVidaState extends State<TempoDeVida> {
     );
   }
 
-  Future calendario(context) async {
-    _dataPicker = await showDatePicker(
-        context: context,
-        initialDate: _dataPicker == null ? DateTime.now() : _dataPicker,
-        firstDate: DateTime(1920),
-        lastDate: DateTime.now());
-
-    _controle.text = DateFormat('d/M/y').format(_dataPicker);
-
-    _dataTxt = DateTime.now().difference(_dataPicker);
-
-    calcularDiferenca(_dataTxt);
+  Future<TimeOfDay> setHoraNascimento(context, TimeOfDay horaNascimento) async {
+    if (horaNascimento != null) {
+      horaNascimento = await relogio(context, horaNascimento);
+    } else {
+      horaNascimento = await relogio(context);
+    }
+    return horaNascimento;
   }
 
-  void calcularDiferenca(Duration diferencaIdade) {
-    print(diferencaIdade);
-    print(diferencaIdade.inDays);
-    _idade['anos'] = _dataAtual.year - _dataPicker.year;
-    _dataPicker.month > _dataAtual.month
-        ? {_idade['meses'] = _dataAtual.month, _idade['anos'] -= 1}
-        : _idade['meses'] = (_dataAtual.month - _dataPicker.month);
-    _dataPicker.day > _dataAtual.day
-        ? _idade['dias'] = _dataAtual.day
-        : _idade['dias'] = _dataAtual.day - _dataPicker.day;
-
-    setState(() {});
+  String formatHora(TimeOfDay hora) {
+    String horaFormatada = '${hora.hour}:${hora.minute}';
+    return horaFormatada;
   }
+
+  Future<DateTime> setDataNascimento(context, DateTime dataNascimento) async {
+    if (dataNascimento != null) {
+      dataNascimento = await calendario(context, dataNascimento);
+    } else {
+      dataNascimento = await calendario(context);
+    }
+    return dataNascimento;
+  }
+
+  String formatData(DateTime data) {
+    String dataFormatada = DateFormat('d/M/y').format(data);
+    return dataFormatada;
+  }
+}
+
+bool calcularHora(Individuo pessoa) {
+  bool diaCompleto = pessoa.getIdade.calcularHora(pessoa.getHoraNascimento);
+
+  return diaCompleto;
+}
+
+void calcularIdade(Individuo pessoa, bool diaCompleto) {
+  pessoa.getIdade.calcularIdade(pessoa.getDataNascimento, diaCompleto);
+}
+
+Future<DateTime> calendario(context, [DateTime dataInicial]) async {
+  DateTime dataNascimento = await showDatePicker(
+      context: context,
+      initialDate: dataInicial ?? DateTime.now(),
+      firstDate: DateTime(DateTime.now().year - 90),
+      lastDate: DateTime.now());
+  return dataNascimento;
+}
+
+Future<TimeOfDay> relogio(context, [TimeOfDay horaInicial]) async {
+  TimeOfDay horaNascimento = await showTimePicker(
+    initialTime: horaInicial ?? TimeOfDay.now(),
+    context: context,
+  );
+  return horaNascimento;
+}
+
+void calcularSpanTempo(Individuo pessoa) {
+  bool diaCompleto = calcularHora(pessoa);
+  calcularIdade(pessoa, diaCompleto);
 }
